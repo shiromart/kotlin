@@ -35,7 +35,7 @@ internal abstract class AbstractFirIdeDiagnosticsCollector(
         registerAllComponents()
     }
 
-    protected abstract fun onDiagnostic(diagnostic: Diagnostic)
+    protected abstract fun onDiagnostic(diagnostic: FirPsiDiagnostic<*>)
 
 
     private inner class Reporter : DiagnosticReporter() {
