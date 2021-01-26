@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.fir.checkers.generator
 
+import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.DIAGNOSTICS_LIST
+import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.generateDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
@@ -45,6 +47,9 @@ fun main(args: Array<String>) {
             classFqn = "org.jetbrains.kotlin.fir.analysis.cfa.AbstractFirPropertyInitializationChecker"
         )
     }
+
+    val diagnosticsPackage = "org.jetbrains.kotlin.fir.analysis.diagnostics"
+    generateDiagnostics(generationPath, diagnosticsPackage, DIAGNOSTICS_LIST)
 }
 
 /*

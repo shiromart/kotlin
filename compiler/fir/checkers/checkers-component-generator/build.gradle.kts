@@ -9,6 +9,9 @@ dependencies {
     implementation(project(":compiler:fir:tree:tree-generator"))
     implementation(project(":kotlin-reflect"))
     implementation(project(":kotlin-reflect-api"))
+
+    implementation(intellijCoreDep()) { includeJars("intellij-core") }
+    implementation(project(":compiler:psi"))
 }
 
 val writeCopyright by task<tasks.WriteCopyrightToFile> {
