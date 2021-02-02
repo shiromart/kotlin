@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.ir.util
 
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val IrDeclaration.isReal: Boolean get() = !isFakeOverride
@@ -33,9 +35,10 @@ val IrFunction.target: IrFunction get() = when (this) {
 fun IrSimpleFunction.collectRealOverrides(
     toSkip: (IrSimpleFunction) -> Boolean = { false },
     filter: (IrOverridableMember) -> Boolean = { false }
-): Set<IrSimpleFunction> {
-    if (isReal && !toSkip(this)) return setOf(this)
+): Collection<IrSimpleFunction> {
+    if (isReal && !toSkip(this)) return listOf(this)
 
+    @Suppress("UNCHECKED_CAST")
     return this.overriddenSymbols
         .map { it.owner }
         .collectAndFilterRealOverrides(
@@ -44,18 +47,16 @@ fun IrSimpleFunction.collectRealOverrides(
                 toSkip(it)
             },
             filter
-        )
-        .map { it as IrSimpleFunction }
-        .toSet()
+        ) as Collection<IrSimpleFunction>
 }
 
 fun Collection<IrOverridableMember>.collectAndFilterRealOverrides(
     toSkip: (IrOverridableMember) -> Boolean = { false },
     filter: (IrOverridableMember) -> Boolean = { false }
-): Set<IrOverridableMember> {
+): Collection<IrOverridableMember> {
 
-    val visited = mutableSetOf<IrOverridableMember>()
-    val realOverrides = mutableSetOf<IrOverridableMember>()
+    val visited = SmartSet.create<IrOverridableMember>()
+    val realOverrides = SmartList<IrOverridableMember>()
 
     fun overriddenSymbols(declaration: IrOverridableMember) = when (declaration) {
         is IrSimpleFunction -> declaration.overriddenSymbols
@@ -77,19 +78,23 @@ fun Collection<IrOverridableMember>.collectAndFilterRealOverrides(
 
     this.forEach { collectRealOverrides(it) }
 
+    var resultingOverrides: MutableSet<IrOverridableMember>? = null
+
     fun excludeRepeated(member: IrOverridableMember) {
         if (!visited.add(member)) return
 
         overriddenSymbols(member).forEach {
-            realOverrides.remove(it.owner)
-            excludeRepeated(it.owner as IrOverridableMember)
+            val overridden = it.owner as IrOverridableMember
+            val result = resultingOverrides ?: realOverrides.toMutableSet().also { set -> resultingOverrides = set }
+            result.remove(overridden)
+            excludeRepeated(overridden)
         }
     }
 
     visited.clear()
-    realOverrides.toList().forEach { excludeRepeated(it) }
+    realOverrides.forEach { excludeRepeated(it) }
 
-    return realOverrides
+    return resultingOverrides ?: realOverrides
 }
 
 // TODO: use this implementation instead of any other
