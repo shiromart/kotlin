@@ -8,9 +8,11 @@ package org.jetbrains.kotlin.fir.checkers.generator.diagnostics
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTypeElement
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirEffectiveVisibility
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.PrivateForInline
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
@@ -144,7 +146,7 @@ val DIAGNOSTICS_LIST = DiagnosticListBuilder.buildDiagnosticList {
             parameter<KtModifierKeywordToken>("modifier1")
             parameter<KtModifierKeywordToken>("modifier2")
         }
-        val REDUNDANT_OPEN_IN_INTERFACE by warning<FirSourceElement, KtModifierListOwner>(PositioningStrategy.MODALITY_MODIFIER)
+        val REDUNDANT_OPEN_IN_INTERFACE by warning<FirSourceElement, KtModifierListOwner>(PositioningStrategy.OPEN_MODIFIER)
     }
 
     group("Applicability") {
@@ -194,18 +196,51 @@ val DIAGNOSTICS_LIST = DiagnosticListBuilder.buildDiagnosticList {
             parameter<String>("type") // TODO use ConeType instead of String
         }
         val VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED by error<FirSourceElement, PsiElement>()
-        val RETURN_TYPE_MISMATCH_ON_OVERRIDE by error<FirSourceElement, PsiElement> {
-            parameter<String>("returnType") // TODO use ConeType instead of String
+
+        val CATCH_PARAMETER_WITH_DEFAULT_VALUE by error<FirSourceElement, PsiElement>()
+        val REIFIED_TYPE_IN_CATCH_CLAUSE by error<FirSourceElement, PsiElement>()
+        val TYPE_PARAMETER_IN_CATCH_CLAUSE by error<FirSourceElement, PsiElement>()
+    }
+
+    group("overrides") {
+        val NOTHING_TO_OVERRIDE by error<FirSourceElement, KtModifierListOwner>(PositioningStrategy.OVERRIDE_MODIFIER) {
+            parameter<FirMemberDeclaration>("declaration")
+        }
+
+        val CANNOT_WEAKEN_ACCESS_PRIVILEGE by error<FirSourceElement, KtModifierListOwner>(PositioningStrategy.VISIBILITY_MODIFIER) {
+            parameter<Visibility>("a")
+            parameter<FirCallableDeclaration<*>>("b")
+            parameter<Name>("c")
+        }
+        val CANNOT_CHANGE_ACCESS_PRIVILEGE by error<FirSourceElement, KtModifierListOwner>(PositioningStrategy.VISIBILITY_MODIFIER) {
+            parameter<Visibility>("a")
+            parameter<FirCallableDeclaration<*>>("b")
+            parameter<Name>("c")
+        }
+
+
+        val OVERRIDING_FINAL_MEMBER by error<FirSourceElement, KtNamedDeclaration>(PositioningStrategy.OVERRIDE_MODIFIER) {
+            parameter<FirCallableDeclaration<*>>("a")
+            parameter<Name>("b")
+        }
+
+        val RETURN_TYPE_MISMATCH_ON_OVERRIDE by error<FirSourceElement, KtNamedDeclaration>(PositioningStrategy.DECLARATION_RETURN_TYPE) {
+            parameter<FirMemberDeclaration>("function")
             parameter<FirMemberDeclaration>("superFunction")
         }
-        val PROPERTY_TYPE_MISMATCH_ON_OVERRIDE by error<FirSourceElement, PsiElement> {
-            parameter<String>("propertyType") // TODO use ConeType instead of String
-            parameter<FirMemberDeclaration>("targetProperty")
+        val PROPERTY_TYPE_MISMATCH_ON_OVERRIDE by error<FirSourceElement, KtNamedDeclaration>(PositioningStrategy.DECLARATION_RETURN_TYPE) {
+            parameter<FirMemberDeclaration>("property")
+            parameter<FirMemberDeclaration>("superProperty")
         }
-        val VAR_TYPE_MISMATCH_ON_OVERRIDE by error<FirSourceElement, PsiElement> {
-            parameter<String>("variableType") // TODO use ConeType instead of String
-            parameter<FirMemberDeclaration>("targetVariable")
+        val VAR_TYPE_MISMATCH_ON_OVERRIDE by error<FirSourceElement, KtNamedDeclaration>(PositioningStrategy.DECLARATION_RETURN_TYPE) {
+            parameter<FirMemberDeclaration>("variable")
+            parameter<FirMemberDeclaration>("superVariable")
         }
+        val VAR_OVERRIDDEN_BY_VAL by error<FirSourceElement, KtNamedDeclaration>(PositioningStrategy.VAL_OR_VAR_NODE) {
+            parameter<FirMemberDeclaration>("a")
+            parameter<FirMemberDeclaration>("b")
+        }
+
     }
 
     group("Redeclarations") {
@@ -290,12 +325,17 @@ val DIAGNOSTICS_LIST = DiagnosticListBuilder.buildDiagnosticList {
         val INITIALIZER_REQUIRED_FOR_DESTRUCTURING_DECLARATION by error<FirSourceElement, KtDestructuringDeclaration>()
         val COMPONENT_FUNCTION_MISSING by error<FirSourceElement, PsiElement> {
             parameter<Name>("missingFunctionName")
-            parameter<FirTypeRef>("destructingType")
+            parameter<ConeKotlinType>("destructingType")
         }
         val COMPONENT_FUNCTION_AMBIGUITY by error<FirSourceElement, PsiElement> {
             parameter<Name>("functionWithAmbiguityName")
             parameter<Collection<AbstractFirBasedSymbol<*>>>("candidates")
         }
+
+        val COMPONENT_FUNCTION_ON_NULLABLE by error<FirSourceElement, KtExpression>() {
+            parameter<Name>("componentFunctionName")
+        }
+
         // TODO: val COMPONENT_FUNCTION_ON_NULLABLE by ...
         // TODO: val COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH by ...
     }
@@ -313,6 +353,16 @@ val DIAGNOSTICS_LIST = DiagnosticListBuilder.buildDiagnosticList {
             parameter<AbstractFirBasedSymbol<*>>("lambda")
         }
         val WRONG_IMPLIES_CONDITION by warning<FirSourceElement, PsiElement>()
+    }
+
+    group("Nullability") {
+        val UNSAFE_CALL by error<FirSourceElement, PsiElement>(PositioningStrategy.DOT_BY_SELECTOR) {
+            parameter<ConeKotlinType>("receiverType")
+        }
+        // TODO: val UNSAFE_IMPLICIT_INVOKE_CALL by error1<FirSourceElement, PsiElement, ConeKotlinType>()
+        // TODO: val UNSAFE_INFIX_CALL by ...
+        // TODO: val UNSAFE_OPERATOR_CALL by ...
+        // TODO: val UNEXPECTED_SAFE_CALL by ...
     }
 
     group(" Extended checkers") {

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTypeElement
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirPsiDiagnostic
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirProperty
@@ -621,9 +622,60 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.CATCH_PARAMETER_WITH_DEFAULT_VALUE) { firDiagnostic ->
+        CatchParameterWithDefaultValueImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.REIFIED_TYPE_IN_CATCH_CLAUSE) { firDiagnostic ->
+        ReifiedTypeInCatchClauseImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.TYPE_PARAMETER_IN_CATCH_CLAUSE) { firDiagnostic ->
+        TypeParameterInCatchClauseImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.NOTHING_TO_OVERRIDE) { firDiagnostic ->
+        NothingToOverrideImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a as FirDeclaration),
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.CANNOT_WEAKEN_ACCESS_PRIVILEGE) { firDiagnostic ->
+        CannotWeakenAccessPrivilegeImpl(
+            firDiagnostic.a,
+            firSymbolBuilder.buildCallableSymbol(firDiagnostic.b as FirCallableDeclaration),
+            firDiagnostic.c,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.CANNOT_CHANGE_ACCESS_PRIVILEGE) { firDiagnostic ->
+        CannotChangeAccessPrivilegeImpl(
+            firDiagnostic.a,
+            firSymbolBuilder.buildCallableSymbol(firDiagnostic.b as FirCallableDeclaration),
+            firDiagnostic.c,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.OVERRIDING_FINAL_MEMBER) { firDiagnostic ->
+        OverridingFinalMemberImpl(
+            firSymbolBuilder.buildCallableSymbol(firDiagnostic.a as FirCallableDeclaration),
+            firDiagnostic.b,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
     add(FirErrors.RETURN_TYPE_MISMATCH_ON_OVERRIDE) { firDiagnostic ->
         ReturnTypeMismatchOnOverrideImpl(
-            firDiagnostic.a,
+            firSymbolBuilder.buildSymbol(firDiagnostic.a as FirDeclaration),
             firSymbolBuilder.buildSymbol(firDiagnostic.b as FirDeclaration),
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
@@ -631,7 +683,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.PROPERTY_TYPE_MISMATCH_ON_OVERRIDE) { firDiagnostic ->
         PropertyTypeMismatchOnOverrideImpl(
-            firDiagnostic.a,
+            firSymbolBuilder.buildSymbol(firDiagnostic.a as FirDeclaration),
             firSymbolBuilder.buildSymbol(firDiagnostic.b as FirDeclaration),
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
@@ -639,7 +691,15 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.VAR_TYPE_MISMATCH_ON_OVERRIDE) { firDiagnostic ->
         VarTypeMismatchOnOverrideImpl(
-            firDiagnostic.a,
+            firSymbolBuilder.buildSymbol(firDiagnostic.a as FirDeclaration),
+            firSymbolBuilder.buildSymbol(firDiagnostic.b as FirDeclaration),
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.VAR_OVERRIDDEN_BY_VAL) { firDiagnostic ->
+        VarOverriddenByValImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a as FirDeclaration),
             firSymbolBuilder.buildSymbol(firDiagnostic.b as FirDeclaration),
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
@@ -855,6 +915,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.COMPONENT_FUNCTION_ON_NULLABLE) { firDiagnostic ->
+        ComponentFunctionOnNullableImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
     add(FirErrors.UNINITIALIZED_VARIABLE) { firDiagnostic ->
         UninitializedVariableImpl(
             firSymbolBuilder.buildVariableSymbol(firDiagnostic.a.fir as FirProperty),
@@ -880,6 +947,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.WRONG_IMPLIES_CONDITION) { firDiagnostic ->
         WrongImpliesConditionImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.UNSAFE_CALL) { firDiagnostic ->
+        UnsafeCallImpl(
+            firSymbolBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
         )
