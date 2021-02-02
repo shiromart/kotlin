@@ -96,19 +96,20 @@ object InlineClassAbi {
         useOldMangleRules: Boolean,
         alwaysMangleReturnType: Boolean = false
     ): String? {
+        val fqNamesForMangling = mutableListOf<InfoForMangling>()
+        irFunction.extensionReceiverParameter?.let { fqNamesForMangling.add(it.type.asInfoForMangling()) }
+        irFunction.valueParameters.mapTo(fqNamesForMangling) { it.type.asInfoForMangling() }
+
+        // The JVM backend computes mangled names after creating suspend function views, but before default argument
+        // stub insertion. It would be nice if this part of the continuation lowering happened earlier in the pipeline.
+        // TODO: Move suspend function view creation before JvmInlineClassLowering.
+        if (irFunction.isSuspend)
+            fqNamesForMangling += InfoForMangling(FqNameUnsafe("kotlin.coroutines.Continuation"), isInline = false, isNullable = false)
+
         val signatureForMangling = collectFunctionSignatureForManglingSuffix(
-            useOldManglingRules = useOldMangleRules,
-            requiresFunctionNameManglingForParameterTypes = irFunction.fullValueParameterList.any { it.type.requiresMangling },
-            fqNamesForMangling = irFunction.fullValueParameterList.map {
-                it.type.asInfoForMangling()
-            } + listOfNotNull(
-                // The JVM backend computes mangled names after creating suspend function views, but before default argument
-                // stub insertion. It would be nice if this part of the continuation lowering happened earlier in the pipeline.
-                // TODO: Move suspend function view creation before JvmInlineClassLowering.
-                if (irFunction.isSuspend)
-                    InfoForMangling(FqNameUnsafe("kotlin.coroutines.Continuation"), isInline = false, isNullable = false)
-                else null
-            ),
+            useOldMangleRules,
+            requiresFunctionNameManglingForParameterTypes = irFunction.hasMangledExtensionReceiverOrValueParameters,
+            fqNamesForMangling,
             returnTypeInfo = if (alwaysMangleReturnType || (mangleReturnTypes && irFunction.hasMangledReturnType)) {
                 irFunction.returnType.asInfoForMangling()
             } else null
@@ -149,10 +150,13 @@ internal val IrType.requiresMangling: Boolean
 internal val IrFunction.fullValueParameterList: List<IrValueParameter>
     get() = listOfNotNull(extensionReceiverParameter) + valueParameters
 
+internal val IrFunction.hasMangledExtensionReceiverOrValueParameters: Boolean
+    get() = extensionReceiverParameter?.type?.requiresMangling == true || valueParameters.any { it.type.requiresMangling }
+
 internal val IrFunction.hasMangledParameters: Boolean
     get() = dispatchReceiverParameter != null && parentAsClass.isInline ||
-            fullValueParameterList.any { it.type.requiresMangling } ||
-            (this is IrConstructor && constructedClass.isInline)
+            hasMangledExtensionReceiverOrValueParameters ||
+            this is IrConstructor && constructedClass.isInline
 
 internal val IrFunction.hasMangledReturnType: Boolean
     get() = returnType.erasedUpperBound.isInline && parentClassOrNull?.isFileClass != true

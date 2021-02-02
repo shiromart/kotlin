@@ -49,49 +49,48 @@ class MemoizedInlineClassReplacements(
 
     internal val originalFunctionForStaticReplacement: MutableMap<IrFunction, IrFunction> = HashMap()
 
-    /**
-     * Get a replacement for a function or a constructor.
-     */
-    val getReplacementFunction: (IrFunction) -> IrSimpleFunction? =
-        storageManager.createMemoizedFunctionWithNullableValues {
+    fun getReplacementFunction(it: IrFunction): IrSimpleFunction? = when {
+        // Don't mangle anonymous or synthetic functions
+        it.origin == IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA ||
+                (it.origin == IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR && it.visibility == DescriptorVisibilities.LOCAL) ||
+                it.isStaticInlineClassReplacement ||
+                it.origin.isSynthetic ->
+            null
+
+        it.isInlineClassFieldGetter ->
+            if (it.hasMangledReturnType)
+                methodReplacement(it)
+            else
+                null
+
+        // Mangle all functions in the body of an inline class
+        it.parent.safeAs<IrClass>()?.isInline == true ->
             when {
-                // Don't mangle anonymous or synthetic functions
-                it.origin == IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA ||
-                        (it.origin == IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR && it.visibility == DescriptorVisibilities.LOCAL) ||
-                        it.isStaticInlineClassReplacement ||
-                        it.origin.isSynthetic ->
+                it.isRemoveAtSpecialBuiltinStub() ->
                     null
-
-                it.isInlineClassFieldGetter ->
-                    if (it.hasMangledReturnType)
-                        createMethodReplacement(it)
-                    else
-                        null
-
-                // Mangle all functions in the body of an inline class
-                it.parent.safeAs<IrClass>()?.isInline == true ->
-                    when {
-                        it.isRemoveAtSpecialBuiltinStub() ->
-                            null
-                        it.isInlineClassMemberFakeOverriddenFromJvmDefaultInterfaceMethod() ->
-                            null
-                        it.origin == IrDeclarationOrigin.IR_BUILTINS_STUB ->
-                            createMethodReplacement(it)
-                        else ->
-                            createStaticReplacement(it)
-                    }
-
-                // Otherwise, mangle functions with mangled parameters, ignoring constructors
-                it is IrSimpleFunction && !it.isFromJava() && (it.hasMangledParameters || mangleReturnTypes && it.hasMangledReturnType) ->
-                    if (it.dispatchReceiverParameter != null)
-                        createMethodReplacement(it)
-                    else
-                        createStaticReplacement(it)
-
+                it.isInlineClassMemberFakeOverriddenFromJvmDefaultInterfaceMethod() ->
+                    null
+                it.origin == IrDeclarationOrigin.IR_BUILTINS_STUB ->
+                    methodReplacement(it)
                 else ->
-                    null
+                    staticReplacement(it)
             }
-        }
+
+        // Otherwise, mangle functions with mangled parameters, ignoring constructors
+        it is IrSimpleFunction && !it.isFromJava() && (it.hasMangledParameters || mangleReturnTypes && it.hasMangledReturnType) ->
+            if (it.dispatchReceiverParameter != null)
+                methodReplacement(it)
+            else
+                staticReplacement(it)
+
+        else -> null
+    }
+
+    private val methodReplacement: (IrFunction) -> IrSimpleFunction? =
+        storageManager.createMemoizedFunctionWithNullableValues(::createMethodReplacement)
+
+    private val staticReplacement: (IrFunction) -> IrSimpleFunction? =
+        storageManager.createMemoizedFunctionWithNullableValues(::createStaticReplacement)
 
     private fun IrFunction.isRemoveAtSpecialBuiltinStub() =
         origin == IrDeclarationOrigin.IR_BUILTINS_STUB &&
