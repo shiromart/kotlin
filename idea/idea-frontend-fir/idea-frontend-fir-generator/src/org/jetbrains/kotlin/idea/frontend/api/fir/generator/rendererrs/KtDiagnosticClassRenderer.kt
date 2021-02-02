@@ -32,7 +32,7 @@ object KtDiagnosticClassRenderer : AbstractDiagnosticsDataClassRenderer() {
     }
 
     private fun SmartPrinter.printDiagnosticClasses(diagnosticList: HLDiagnosticList) {
-        inBracketsWithIndent("sealed class KtFirDiagnostic : KtDiagnosticWithPsi") {
+        inBracketsWithIndent("sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI>") {
             for (diagnostic in diagnosticList.diagnostics) {
                 printDiagnosticClass(diagnostic)
                 println()
@@ -41,18 +41,12 @@ object KtDiagnosticClassRenderer : AbstractDiagnosticsDataClassRenderer() {
     }
 
     private fun SmartPrinter.printDiagnosticClass(diagnostic: HLDiagnostic) {
-        inBracketsWithIndent("abstract class ${diagnostic.className} : KtFirDiagnostic()") {
+        print("abstract class ${diagnostic.className} : KtFirDiagnostic<")
+        printTypeWithShortNames(diagnostic.original.psiType)
+        print(">()")
+        inBracketsWithIndent {
             println("override val diagnosticClass get() = ${diagnostic.className}::class")
-            printPsiParameter(diagnostic)
             printDiagnosticParameters(diagnostic)
-        }
-    }
-
-    private fun SmartPrinter.printPsiParameter(diagnostic: HLDiagnostic) {
-        if (diagnostic.original.psiType.classifier != PsiElement::class) {
-            print("abstract override val psi: ")
-            printTypeWithShortNames(diagnostic.original.psiType)
-            println()
         }
     }
 
@@ -67,5 +61,6 @@ object KtDiagnosticClassRenderer : AbstractDiagnosticsDataClassRenderer() {
 
     private val importsToAdd = listOf(
         "org.jetbrains.kotlin.idea.frontend.api.diagnostics.KtDiagnosticWithPsi",
+        "com.intellij.psi.PsiElement",
     )
 }
