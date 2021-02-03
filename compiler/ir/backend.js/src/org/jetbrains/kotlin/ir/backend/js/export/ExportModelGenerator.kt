@@ -375,8 +375,12 @@ private fun getExportCandidate(declaration: IrDeclaration): IrDeclarationWithNam
         return null
     }
 
-    // Workaround to get property declarations instead of its lowered accessors.
     if (declaration is IrSimpleFunction) {
+        if (declaration.overriddenSymbols.isNotEmpty()) {
+            return null
+        }
+
+        // Workaround to get property declarations instead of its lowered accessors.
         val property = declaration.correspondingPropertySymbol?.owner
         if (property != null) {
             // Return property for getter accessors only to prevent
