@@ -288,7 +288,7 @@ private class FirSupertypeResolverVisitor(
                 session.firLookupTracker?.let {
                     val fileSource = session.firProvider.getFirClassifierContainerFile(classLikeDeclaration.symbol).source
                     for (supertypeRef in supertypeRefs) {
-                        it.recordLookup(supertypeRef, fileSource, scope)
+                        it.recordLookup(supertypeRef, fileSource, scope.scopeLookupNames)
                     }
                 }
             }
