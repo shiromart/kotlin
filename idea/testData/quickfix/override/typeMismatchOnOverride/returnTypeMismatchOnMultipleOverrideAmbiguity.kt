@@ -1,3 +1,4 @@
+/* FIR_COMPARISON */
 // "Change 'B.foo' function return type to 'Int'" "false"
 // "Change 'B.foo' function return type to 'Long'" "false"
 // "Remove explicitly specified return type" "false"

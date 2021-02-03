@@ -1,3 +1,4 @@
+/* FIR_COMPARISON */
 // "Remove redundant 'open' modifier" "true"
 
 interface My {

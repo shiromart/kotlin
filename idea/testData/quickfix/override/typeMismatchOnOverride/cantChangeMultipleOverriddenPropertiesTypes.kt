@@ -1,3 +1,4 @@
+/* FIR_COMPARISON */
 // "Change type of overriden property 'A.x' to '(Int) -> Int'" "false"
 // ACTION: Change type to '(String) -> Int'
 // ACTION: Introduce import alias

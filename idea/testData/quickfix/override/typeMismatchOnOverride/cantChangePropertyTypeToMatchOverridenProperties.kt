@@ -1,3 +1,4 @@
+/* FIR_COMPARISON */
 // "class org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix" "false"
 // ERROR: Type of 'x' doesn't match the type of the overridden var-property 'public abstract var x: String defined in A'
 interface A {

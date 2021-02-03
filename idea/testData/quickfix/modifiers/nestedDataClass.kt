@@ -1,3 +1,4 @@
+/* FIR_COMPARISON */
 // "Add 'inner' modifier" "false"
 // ACTION: Create test
 // ERROR: Class is not allowed here

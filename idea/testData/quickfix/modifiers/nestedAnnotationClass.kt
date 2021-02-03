@@ -1,3 +1,4 @@
+/* FIR_COMPARISON */
 // "Add 'inner' modifier" "false"
 // ERROR: Annotation class is not allowed here
 class A() {

@@ -6,9 +6,20 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.test.uitls.IgnoreTests
+import java.nio.file.Paths
 
 
 abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
+    override fun doTest(beforeFileName: String) {
+        IgnoreTests.runTestIfEnabledByFileDirective(
+            Paths.get(beforeFileName),
+            enableTestDirective = IgnoreTests.DIRECTIVES.FIR_COMPARISON_MUTLTILINE_COMMENT
+        ) {
+            super.doTest(beforeFileName)
+        }
+    }
+
     override fun checkForUnexpectedErrors() {}
     override fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {}
 }

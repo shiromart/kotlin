@@ -1,3 +1,4 @@
+/* FIR_COMPARISON */
 // "Add 'lateinit' modifier" "false"
 // ACTION: Add initializer
 // ACTION: Introduce import alias

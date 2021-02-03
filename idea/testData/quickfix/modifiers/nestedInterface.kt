@@ -1,3 +1,4 @@
+/* FIR_COMPARISON */
 // "Add 'inner' modifier" "false"
 // ACTION: Implement interface
 // ERROR: Interface is not allowed here

@@ -1,3 +1,4 @@
+/* FIR_COMPARISON */
 // "Add 'inner' modifier" "false"
 // ACTION: Convert to enum class
 // ACTION: Create test
