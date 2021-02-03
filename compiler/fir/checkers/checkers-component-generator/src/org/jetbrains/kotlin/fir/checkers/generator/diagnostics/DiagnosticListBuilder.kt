@@ -33,21 +33,21 @@ class DiagnosticListBuilder private constructor() {
     }
 
     @OptIn(PrivateForInline::class)
-    inline fun <reified E : FirSourceElement, reified P : PsiElement> error(
+    inline fun <reified E : FirSourceElement, reified P> error(
         positioningStrategy: PositioningStrategy = PositioningStrategy.DEFAULT,
         crossinline init: DiagnosticBuilder.() -> Unit = {}
     ) = diagnosticDelegateProvider<E, P>(Severity.ERROR, positioningStrategy, init)
 
 
     @OptIn(PrivateForInline::class)
-    inline fun <reified E : FirSourceElement, reified P : PsiElement> warning(
+    inline fun <reified E : FirSourceElement, reified P> warning(
         positioningStrategy: PositioningStrategy = PositioningStrategy.DEFAULT,
         crossinline init: DiagnosticBuilder.() -> Unit = {}
     ) = diagnosticDelegateProvider<E, P>(Severity.WARNING, positioningStrategy, init)
 
     @PrivateForInline
     @OptIn(ExperimentalStdlibApi::class)
-    inline fun <reified E : FirSourceElement, reified P : PsiElement> diagnosticDelegateProvider(
+    inline fun <reified E : FirSourceElement, reified P> diagnosticDelegateProvider(
         severity: Severity,
         positioningStrategy: PositioningStrategy,
         crossinline init: DiagnosticBuilder.() -> Unit = {}
